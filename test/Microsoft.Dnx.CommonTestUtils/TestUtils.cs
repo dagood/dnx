@@ -64,7 +64,7 @@ namespace Microsoft.Dnx.CommonTestUtils
                 RedirectStandardError = true
             };
 
-            environment = environment ?? new Directory<string, string>();
+            environment = environment ?? new Dictionary<string, string>();
 
             if (string.Equals(RuntimeEnvironmentHelper.RuntimeEnvironment.OperatingSystem, "Darwin"))
             {
