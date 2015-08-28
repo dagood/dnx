@@ -30,16 +30,6 @@ namespace Microsoft.Dnx.CommonTestUtils
         {
             var tempDirPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
             Directory.CreateDirectory(tempDirPath);
-
-            if (string.Equals(RuntimeEnvironmentHelper.RuntimeEnvironment.OperatingSystem, "Darwin"))
-            {
-                // Resolves issues on Mac where GetTempPath gives /var and GetCurrentDirectory gives /private/var
-                var currentDirectory = Directory.GetCurrentDirectory();
-                Directory.SetCurrentDirectory(tempDirPath);
-                tempDirPath = Directory.GetCurrentDirectory();
-                Directory.SetCurrentDirectory(currentDirectory);
-            }
-
             return tempDirPath;
         }
 
@@ -73,6 +63,15 @@ namespace Microsoft.Dnx.CommonTestUtils
                 RedirectStandardOutput = true,
                 RedirectStandardError = true
             };
+
+            environment = environment ?? new Directory<string, string>();
+
+            if (string.Equals(RuntimeEnvironmentHelper.RuntimeEnvironment.OperatingSystem, "Darwin"))
+            {
+                // Make sure that the test and external process have the same view of what the temp
+                // directory is
+                environment["TMPDIR"] = Path.GetTempPath();
+            }
 
             if (environment != null)
             {
