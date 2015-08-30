@@ -137,7 +137,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
         {
             var emitOptions = new EmitOptions();
 
-            var usePortablePdbString = Environment.GetEnvironmentVariable(EnvironmentNames.BuildDelaySign);
+            var usePortablePdbString = Environment.GetEnvironmentVariable(EnvironmentNames.PortablePdb);
 
             // Use portable pdbs if explicitly specified or the platform doesn't support pdb genertion
             var usePortablePdb = !_supportsPdbGeneration.Value ||
@@ -146,7 +146,8 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
             if (usePortablePdb)
             {
-                emitOptions.WithDebugInformationFormat(DebugInformationFormat.PortablePdb);
+                Logger.TraceInformation("Using portable pdb format");
+                return emitOptions.WithDebugInformationFormat(DebugInformationFormat.PortablePdb);
             }
 
             return emitOptions;
