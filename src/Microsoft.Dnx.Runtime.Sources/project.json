@@ -3,6 +3,7 @@
     "compilationOptions": { "define": [ "TRACE" ], "warningsAsErrors": true },
     "shared": "**/*.cs",
     "dependencies": {
+        "Microsoft.Framework.HashCodeCombiner.Sources": { "version": "1.0.0-*", "type": "build" }
     },
     "frameworks": {
         "dnx451": { },
