@@ -246,19 +246,16 @@ namespace Microsoft.Dnx.Compilation.CSharp
                     }
                 }
 
-                if (_supportsPdbGeneration.Value)
+                if (afterCompileContext.SymbolStream != null)
                 {
-                    if (afterCompileContext.SymbolStream != null)
-                    {
-                        afterCompileContext.SymbolStream.Position = 0;
+                    afterCompileContext.SymbolStream.Position = 0;
 
-                        using (var pdbFileStream = File.Create(pdbPath))
-                        {
-                            afterCompileContext.SymbolStream.CopyTo(pdbFileStream);
-                        }
+                    using (var pdbFileStream = File.Create(pdbPath))
+                    {
+                        afterCompileContext.SymbolStream.CopyTo(pdbFileStream);
                     }
                 }
-
+            
                 return CreateDiagnosticResult(emitResult.Success, afterCompileContext.Diagnostics,
                         CompilationContext.ProjectContext.TargetFramework);
             }
