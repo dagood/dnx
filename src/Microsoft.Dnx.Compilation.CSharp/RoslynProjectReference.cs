@@ -144,7 +144,8 @@ namespace Microsoft.Dnx.Compilation.CSharp
                 }
 
                 if (afterCompileContext.SymbolStream == null ||
-                    afterCompileContext.SymbolStream.Length == 0)
+                    afterCompileContext.SymbolStream.Length == 0 ||
+                    RuntimeEnvironmentHelper.IsMono)
                 {
                     assembly = loadContext.LoadStream(afterCompileContext.AssemblyStream, assemblySymbols: null);
                 }
