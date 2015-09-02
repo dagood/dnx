@@ -2,8 +2,8 @@ language: csharp
 sudo: false
 env:
   - MONO_THREADS_PER_CPU=2000
+  - DNX_TRACE=1
 os:
   - linux
-  - osx
 script:
   - ./build.sh --quiet verify
