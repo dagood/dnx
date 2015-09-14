@@ -1150,7 +1150,7 @@ namespace Microsoft.Dnx.DesignTimeHost
 
                 foreach (var library in applicationHostContext.LibraryManager.GetLibraryDescriptions())
                 {
-                    var description = CreateDependencyDescription(library);
+                    var description = CreateDependencyDescription(library, ProtocolVersion);
                     info.Dependencies[description.Name] = description;
 
                     // Skip unresolved libraries
@@ -1233,14 +1233,15 @@ namespace Microsoft.Dnx.DesignTimeHost
             return Path.GetFullPath(Path.Combine(referencedProject.ProjectDirectory, path));
         }
 
-        private static DependencyDescription CreateDependencyDescription(LibraryDescription library)
+        private static DependencyDescription CreateDependencyDescription(LibraryDescription library, int protocolVersion)
         {
-            return new DependencyDescription
+            var result = new DependencyDescription
             {
                 Name = library.Identity.Name,
                 DisplayName = library.Identity.IsGacOrFrameworkReference ? library.RequestedRange.GetReferenceAssemblyName() : library.Identity.Name,
                 Version = library.Identity.Version?.ToString(),
-                Type = library.Resolved ? library.Type : "Unresolved",
+                Type = library.Type,
+                Resolved = library.Resolved,
                 Path = library.Path,
                 Dependencies = library.Dependencies.Select(dependency => new DependencyItem
                 {
@@ -1248,6 +1249,13 @@ namespace Microsoft.Dnx.DesignTimeHost
                     Version = dependency.Library?.Identity?.Version?.ToString()
                 })
             };
+
+            if (protocolVersion < 3 && !library.Resolved)
+            {
+                result.Type = "Unresolved";
+            }
+
+            return result;
         }
 
         private static string GetValue(JToken token, string name)
