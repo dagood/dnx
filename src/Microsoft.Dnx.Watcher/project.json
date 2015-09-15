@@ -1,0 +1,22 @@
+﻿{
+    "version": "1.0.0-*",
+    "compilationOptions": { "warningsAsErrors": true },
+    "dependencies": {
+        "Microsoft.Dnx.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Dnx.Watcher.Core": "1.0.0-*",
+        "Microsoft.Framework.CommandLineUtils.Sources": { "version": "1.0.0-*", "type": "build" }
+    }, 
+    "frameworks": {
+        "dnx451": { },
+        "dnxcore50": { }
+    },
+
+    "commands": {
+        "dnx-watch": "Microsoft.Dnx.Watcher"
+    },
+
+    "scripts": {
+        "postbuild": [
+        ]
+    }
+}

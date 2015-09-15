@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "dnx-watch": {
+      "commandName": "dnx-watch",
+      "commandLineArgs": "--project D:\\aspnet\\musicstore\\src\\musicstore"
+    }
+  }
+}

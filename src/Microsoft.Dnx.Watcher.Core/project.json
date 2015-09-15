@@ -1,0 +1,28 @@
+﻿{
+    "version": "1.0.0-*",
+    "compilationOptions": { "warningsAsErrors": true },
+    "dependencies": {
+        "Microsoft.Dnx.Runtime": "1.0.0-*",
+        "Microsoft.Dnx.Runtime.Internals": { "version": "1.0.0-*", "type": "build" }
+    }, 
+    "frameworks": {
+        "dnx451": {
+            "frameworkAssemblies": {
+                "System.Collections": "",
+                "System.Runtime": ""
+            }
+        },
+        "dnxcore50": {
+            "dependencies": {
+                "System.Diagnostics.Process": "4.0.0-beta-*", 
+                "System.Linq": "4.0.1-beta-*",
+                "System.Runtime.Extensions": "4.0.11-beta-*"
+            }
+        }
+    },
+
+    "scripts": {
+        "postbuild": [
+        ]
+    }
+}
