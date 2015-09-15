@@ -19,8 +19,8 @@ namespace Microsoft.Dnx.Watcher.Core
         private IFileProvider _rootFileProvider;
 
         public ProjectWatcher(
-            
-            Func<string, IFileProvider> fileProviderFactory, 
+
+            Func<string, IFileProvider> fileProviderFactory,
             IRuntimeEnvironment runtimeEnviornment)
         {
             _fileProviderFactory = fileProviderFactory;
@@ -73,34 +73,33 @@ namespace Microsoft.Dnx.Watcher.Core
 
         private Project WaitForValidProjectJson(CancellationToken cancellationToken)
         {
-            Project project;
-            try
+            Project project = null;
+
+            if (TryGetProject(_watchedProjectFile, out project))
             {
-                Project.TryGetProject(_watchedProjectFile, out project);
-            }
-            catch
-            {
-                // Do nothing but that TryGetProject actually throws...
-                project = null;
+                return project;
             }
 
-            if (project == null)
+            // Invalid project so wait for a valid one
+            using (var projectFileChanged = new ManualResetEvent(false))
+            using (_rootFileProvider.Watch(Project.ProjectFileName)
+                    .RegisterExpirationCallback(
+                        _ => { projectFileChanged.Set(); },
+                        state: null))
             {
-                var expiration = _rootFileProvider.Watch(Project.ProjectFileName);
-
-                using (var changed = new ManualResetEvent(false))
+                while (!cancellationToken.IsCancellationRequested)
                 {
-                    expiration.RegisterExpirationCallback(_ =>
+                    if (projectFileChanged.WaitOne(500))
                     {
-                        changed.Set();
-                    },
-                    state: null);
-
-                    changed.WaitOne();
+                        if (TryGetProject(_watchedProjectFile, out project))
+                        {
+                            return project;
+                        }
+                    }
                 }
             }
 
-            return project;
+            return null;
         }
 
         private string ResolveProcessHostName()
@@ -116,6 +115,19 @@ namespace Microsoft.Dnx.Watcher.Core
             return $"/c dnx --debug --appbase {Path.GetDirectoryName(_watchedProjectFile)} --project {_watchedProjectFile} Microsoft.Dnx.ApplicationHost {userArguments}";
         }
 
-        
+        // Same as TryGetProject but it doesn't throw
+        public bool TryGetProject(string projectFile, out Project project)
+        {
+            //TODO: Consider printing the errors
+            try
+            {
+                return Project.TryGetProject(_watchedProjectFile, out project);
+            }
+            catch
+            {
+                project = null;
+                return false;
+            }
+        }
     }
 }
