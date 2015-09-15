@@ -1153,12 +1153,7 @@ namespace Microsoft.Dnx.DesignTimeHost
                     var description = CreateDependencyDescription(library, ProtocolVersion);
                     info.Dependencies[description.Name] = description;
 
-                    // Skip unresolved libraries
-                    if (!library.Resolved)
-                    {
-                        continue;
-                    }
-
+                    // Send back the project reference even if it is not resolved.
                     if (string.Equals(library.Type, LibraryTypes.Project) &&
                        !string.Equals(library.Identity.Name, project.Name))
                     {
