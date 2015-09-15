@@ -1,6 +1,8 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System.Threading;
+using Microsoft.AspNet.FileProviders;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common.CommandLine;
 using Microsoft.Dnx.Watcher.Core;
@@ -40,9 +42,14 @@ namespace Microsoft.Dnx.Watcher
 
             app.OnExecute(() =>
             {
-                var watcher = new ProjectWatcher(projectArg.Value(), _runtimeEnvironment);
-             
-                return watcher.Watch() ? 0 : 1;
+                var watcher = new ProjectWatcher(
+                    root => { return new PhysicalFileProvider(root); },
+                    _runtimeEnvironment);
+                watcher.Initialize(projectArg.Value());
+
+                var success = watcher.Watch(CancellationToken.None);
+
+                return success ? 0 : 1;
             });
 
             return app.Execute(args);

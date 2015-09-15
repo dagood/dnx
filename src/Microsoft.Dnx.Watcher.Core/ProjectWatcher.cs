@@ -4,21 +4,35 @@
 using System;
 using System.IO;
 using System.Threading;
+using Microsoft.AspNet.FileProviders;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Framework.Caching;
 
 namespace Microsoft.Dnx.Watcher.Core
 {
     public class ProjectWatcher
     {
-        private readonly string _watchedProjectFile;
         private readonly bool _isWindows;
+        private readonly Func<string, IFileProvider> _fileProviderFactory;
 
-        public ProjectWatcher(string projectOrDirectory, IRuntimeEnvironment runtimeEnviornment)
+        private string _watchedProjectFile;
+        private IFileProvider _rootFileProvider;
+
+        public ProjectWatcher(
+            
+            Func<string, IFileProvider> fileProviderFactory, 
+            IRuntimeEnvironment runtimeEnviornment)
         {
-            // TODO: consider doing this in an initialize method so don't throw
-            _watchedProjectFile = ResolveProjectFileToWatch(projectOrDirectory);
-
+            _fileProviderFactory = fileProviderFactory;
             _isWindows = string.Equals(runtimeEnviornment.OperatingSystem, "windows", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public void Initialize(string projectOrDirectory)
+        {
+            _watchedProjectFile = ResolveProjectFileToWatch(projectOrDirectory);
+            _rootFileProvider = _fileProviderFactory(Path.GetDirectoryName(_watchedProjectFile));
+
+            // TODO: check initialized
         }
 
         private string ResolveProjectFileToWatch(string projectOrDirectory)
@@ -42,8 +56,10 @@ namespace Microsoft.Dnx.Watcher.Core
             return projectOrDirectory;
         }
 
-        public bool Watch()
+        public bool Watch(CancellationToken cancellationToken)
         {
+            var project = WaitForValidProjectJson(cancellationToken);
+
             //var dnxWatcher = new ProcessWatcher(
             //    ResolveProcessHostName(),
             //    ResolveProcessArguments("web"));
@@ -55,9 +71,36 @@ namespace Microsoft.Dnx.Watcher.Core
             return true;
         }
 
-        private void WaitForProjectJsonFileToChange()
+        private Project WaitForValidProjectJson(CancellationToken cancellationToken)
         {
+            Project project;
+            try
+            {
+                Project.TryGetProject(_watchedProjectFile, out project);
+            }
+            catch
+            {
+                // Do nothing but that TryGetProject actually throws...
+                project = null;
+            }
 
+            if (project == null)
+            {
+                var expiration = _rootFileProvider.Watch(Project.ProjectFileName);
+
+                using (var changed = new ManualResetEvent(false))
+                {
+                    expiration.RegisterExpirationCallback(_ =>
+                    {
+                        changed.Set();
+                    },
+                    state: null);
+
+                    changed.WaitOne();
+                }
+            }
+
+            return project;
         }
 
         private string ResolveProcessHostName()
@@ -72,5 +115,7 @@ namespace Microsoft.Dnx.Watcher.Core
             // TODO: Fix this appbase hack once Pawel fixes the env var
             return $"/c dnx --debug --appbase {Path.GetDirectoryName(_watchedProjectFile)} --project {_watchedProjectFile} Microsoft.Dnx.ApplicationHost {userArguments}";
         }
+
+        
     }
 }
