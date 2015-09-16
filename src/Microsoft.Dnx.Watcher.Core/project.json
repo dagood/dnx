@@ -4,8 +4,13 @@
     "dependencies": {
         "Microsoft.AspNet.FileProviders.Abstractions": "1.0.0-*",
         "Microsoft.AspNet.FileProviders.Physical": "1.0.0-*",
+        "Microsoft.Dnx.Compilation": "1.0.0-*",
         "Microsoft.Dnx.Runtime": "1.0.0-*",
         "Microsoft.Dnx.Runtime.Internals": {
+            "version": "1.0.0-*",
+            "type": "build"
+        },
+        "Microsoft.Dnx.Runtime.Sources": {
             "version": "1.0.0-*",
             "type": "build"
         }

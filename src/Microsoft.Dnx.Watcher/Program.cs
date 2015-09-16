@@ -3,6 +3,7 @@
 
 using System.Threading;
 using Microsoft.AspNet.FileProviders;
+using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common.CommandLine;
 using Microsoft.Dnx.Watcher.Core;
@@ -44,6 +45,7 @@ namespace Microsoft.Dnx.Watcher
             {
                 var watcher = new ProjectWatcher(
                     root => { return new PhysicalFileProvider(root); },
+                    new ProjectGraphProvider(),
                     _runtimeEnvironment);
                 watcher.Initialize(projectArg.Value());
 

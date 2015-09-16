@@ -3,36 +3,45 @@
 
 using System;
 using System.IO;
+using System.Runtime.Versioning;
 using System.Threading;
 using Microsoft.AspNet.FileProviders;
+using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Framework.Caching;
+using Microsoft.Dnx.Runtime.Common.Impl;
+using NuGet;
 
 namespace Microsoft.Dnx.Watcher.Core
 {
     public class ProjectWatcher
     {
-        private readonly bool _isWindows;
         private readonly Func<string, IFileProvider> _fileProviderFactory;
+        private readonly IProjectGraphProvider _projectGraphProvider;
+        private readonly bool _isWindows;
 
         private string _watchedProjectFile;
+        private string _rootFolder;
+
         private IFileProvider _rootFileProvider;
 
         public ProjectWatcher(
-
             Func<string, IFileProvider> fileProviderFactory,
+            IProjectGraphProvider projectGraphProvider,
             IRuntimeEnvironment runtimeEnviornment)
         {
             _fileProviderFactory = fileProviderFactory;
+            _projectGraphProvider = projectGraphProvider;
             _isWindows = string.Equals(runtimeEnviornment.OperatingSystem, "windows", StringComparison.OrdinalIgnoreCase);
         }
 
         public void Initialize(string projectOrDirectory)
         {
-            _watchedProjectFile = ResolveProjectFileToWatch(projectOrDirectory);
-            _rootFileProvider = _fileProviderFactory(Path.GetDirectoryName(_watchedProjectFile));
+            var projectFullPath = ResolveProjectFileToWatch(projectOrDirectory);
 
-            // TODO: check initialized
+            _rootFolder = ProjectRootResolver.ResolveRootDirectory(projectFullPath);
+            _rootFileProvider = _fileProviderFactory(_rootFolder);
+
+            _watchedProjectFile = PathUtility.GetRelativePath(projectFullPath, _rootFolder);
         }
 
         private string ResolveProjectFileToWatch(string projectOrDirectory)
@@ -60,12 +69,17 @@ namespace Microsoft.Dnx.Watcher.Core
         {
             var project = WaitForValidProjectJson(cancellationToken);
 
+            var libManager = _projectGraphProvider.GetProjectGraph(
+                project,
+                new FrameworkName(FrameworkNames.LongNames.Dnx, new Version(4, 5, 1)));
+
             //var dnxWatcher = new ProcessWatcher(
             //    ResolveProcessHostName(),
             //    ResolveProcessArguments("web"));
 
             //int dnxProcessId = dnxWatcher.Start();
             //Console.WriteLine(dnxProcessId);
+            
             //int dnxExitCode = dnxWatcher.WaitForExit(CancellationToken.None);
 
             return true;
