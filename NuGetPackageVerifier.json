@@ -76,10 +76,10 @@
                 "VERSION_INFORMATIONALVERSION": {
                     "bin\\lib\\Microsoft.Dnx.DesignTimeHost\\Newtonsoft.Json.dll": "3rd party DLLs don't need this",
                     "bin\\lib\\Microsoft.Dnx.Tooling\\Newtonsoft.Json.dll": "3rd party DLLs don't need this",
-                    "bin\\Microsoft.Dnx.Host.Mono.dll": "Need to follow up, not from ADX team"
+                    "bin\\Microsoft.Dnx.Host.Mono.dll": "Temporary exclusion, will get fixed in https://github.com/aspnet/dnx/issues/2045"
                 },
                 "VERSION_FILEVERSION": {
-                    "bin\\Microsoft.Dnx.Host.Mono.dll": "Need to follow up, not from ADX team"
+                    "bin\\Microsoft.Dnx.Host.Mono.dll": "Temporary exclusion, will get fixed in https://github.com/aspnet/dnx/issues/2045"
                 },
                 "SERVICING_ATTRIBUTE": {
                     "bin\\lib\\Microsoft.Dnx.DesignTimeHost\\Microsoft.Framework.NotNullAttribute.Sources.dll": "BUG: This file shouldn't be here",
@@ -88,7 +88,7 @@
                     "bin\\lib\\Microsoft.Dnx.Tooling\\Newtonsoft.Json.dll": "3rd party DLLs don't need this",
                     "bin\\Microsoft.CodeAnalysis.CSharp.dll": "Need to follow up, not from ADX team",
                     "bin\\Microsoft.CodeAnalysis.dll": "Need to follow up, not from ADX team",
-                    "bin\\Microsoft.Dnx.Host.Mono.dll": "Need to follow up, not from ADX team",
+                    "bin\\Microsoft.Dnx.Host.Mono.dll": "Temporary exclusion, will get fixed in https://github.com/aspnet/dnx/issues/2045",
                     "bin\\Microsoft.Framework.HashCodeCombiner.Sources.dll": "BUG: This file shouldn't be here"
                 }
             },
