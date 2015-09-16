@@ -47,6 +47,11 @@ namespace Microsoft.Dnx.Testing
 
         public static string GetTestFolder<T>(DnxSdk sdk, [CallerMemberName]string testName = null)
         {
+            return GetTestFolder(sdk, typeof(T).Name, testName);
+        }
+
+        public static string GetTestFolder(DnxSdk sdk, string typeName, [CallerMemberName]string testName = null)
+        {
             // This env var can be set by VS load profile
             var basePath = Environment.GetEnvironmentVariable("DNX_LOCAL_TEMP_FOLDER_FOR_TESTING");
             if (string.IsNullOrEmpty(basePath))
@@ -55,7 +60,7 @@ namespace Microsoft.Dnx.Testing
                 basePath = Path.Combine(rootPath, "TestOutput");
             }
 
-            var tempFolderPath = Path.Combine(basePath, sdk.FullName, $"{typeof(T).Name}.{testName}");
+            var tempFolderPath = Path.Combine(basePath, sdk.FullName, $"{typeName}.{testName}");
             Directory.CreateDirectory(tempFolderPath);
             return tempFolderPath;
         }

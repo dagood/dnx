@@ -37,7 +37,8 @@ namespace Microsoft.Dnx.Testing
             string restoreDir,
             string packagesDir = null,
             IEnumerable<string> feeds = null,
-            string additionalArguments = null)
+            string additionalArguments = null,
+            Action<Dictionary<string, string>> envSetup = null)
         {
             var sb = new StringBuilder();
             sb.Append($"restore \"{restoreDir}\"");
@@ -54,7 +55,7 @@ namespace Microsoft.Dnx.Testing
 
             sb.Append($" {additionalArguments}");
 
-            return Execute(sb.ToString());
+            return Execute(sb.ToString(), envSetup);
         }
 
         public ExecResult PackagesAdd(
@@ -68,24 +69,29 @@ namespace Microsoft.Dnx.Testing
 
         public ExecResult Wrap(
             string csprojPath,
-            string additionalArguments = null)
+            string additionalArguments = null,
+            Action<Dictionary<string, string>> envSetup = null)
         {
-            return Execute($"wrap \"{csprojPath}\" {additionalArguments}");
+            return Execute($"wrap \"{csprojPath}\" {additionalArguments}", envSetup);
         }
 
         public DnuPackOutput Pack(
             string projectDir, 
-            string outputPath, 
+            string outputPath = null, 
             string configuration = "Debug",
-            string additionalArguments = null)
+            string additionalArguments = null,
+            Action<Dictionary<string, string>> envSetup = null)
         {
             var sb = new StringBuilder();
             sb.Append($@"pack ""{projectDir}""");
-            sb.Append($@" --out ""{outputPath}""");
+            if (!string.IsNullOrEmpty(outputPath))
+            {
+                sb.Append($@" --out ""{outputPath}""");
+            }
             sb.Append($" --configuration {configuration}");
             sb.Append($" {additionalArguments}");
 
-            var result = Execute(sb.ToString());
+            var result = Execute(sb.ToString(), envSetup);
 
             var projectName = new DirectoryInfo(projectDir).Name;
             return new DnuPackOutput(outputPath, projectName, configuration)

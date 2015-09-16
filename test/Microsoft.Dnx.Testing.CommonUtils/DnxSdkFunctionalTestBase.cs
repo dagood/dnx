@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Microsoft.Dnx.Runtime;
 
 namespace Microsoft.Dnx.Testing
@@ -59,6 +60,10 @@ namespace Microsoft.Dnx.Testing
             }
         }
 
+        protected string GetTestDir(DnxSdk sdk, [CallerMemberName]string testMethodName = null)
+        {
+            return TestUtils.GetTestFolder(sdk, GetType().Name, testMethodName);
+        }
 
         private static DnxSdk GetRuntime(string flavor, string os, string arch)
         {
