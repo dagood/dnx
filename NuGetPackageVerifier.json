@@ -1,0 +1,134 @@
+{
+    "adx": { // Packages written by the ADX team and that ship on NuGet.org
+        "rules": [
+            "AssemblyHasDocumentFileRule",
+            "AssemblyHasVersionAttributesRule",
+            "AssemblyHasServicingAttributeRule",
+            "SatellitePackageRule",
+            "StrictSemanticVersionValidationRule"
+        ],
+        "packages": {
+            "dnx-clr-win-x64": {
+                "VERSION_INFORMATIONALVERSION": {
+                    "bin\\lib\\Microsoft.Dnx.DesignTimeHost\\Newtonsoft.Json.dll": "3rd party DLLs don't need this",
+                    "bin\\lib\\Microsoft.Dnx.Tooling\\Newtonsoft.Json.dll": "3rd party DLLs don't need this"
+                },
+                "SERVICING_ATTRIBUTE": {
+                    "bin\\lib\\Microsoft.Dnx.DesignTimeHost\\Microsoft.Framework.NotNullAttribute.Sources.dll": "BUG: This file shouldn't be here",
+                    "bin\\lib\\Microsoft.Dnx.DesignTimeHost\\Newtonsoft.Json.dll": "3rd party DLLs don't need this",
+                    "bin\\lib\\Microsoft.Dnx.Tooling\\Microsoft.Framework.NotNullAttribute.Sources.dll": "BUG: This file shouldn't be here",
+                    "bin\\lib\\Microsoft.Dnx.Tooling\\Newtonsoft.Json.dll": "3rd party DLLs don't need this",
+                    "bin\\Microsoft.CodeAnalysis.CSharp.dll": "Need to follow up, not from ADX team",
+                    "bin\\Microsoft.CodeAnalysis.dll": "Need to follow up, not from ADX team",
+                    "bin\\Microsoft.Framework.HashCodeCombiner.Sources.dll": "BUG: This file shouldn't be here"
+                }
+            },
+            "dnx-clr-win-x86": {
+                "VERSION_INFORMATIONALVERSION": {
+                    "bin\\lib\\Microsoft.Dnx.DesignTimeHost\\Newtonsoft.Json.dll": "3rd party DLLs don't need this",
+                    "bin\\lib\\Microsoft.Dnx.Tooling\\Newtonsoft.Json.dll": "3rd party DLLs don't need this"
+                },
+                "SERVICING_ATTRIBUTE": {
+                    "bin\\lib\\Microsoft.Dnx.DesignTimeHost\\Microsoft.Framework.NotNullAttribute.Sources.dll": "BUG: This file shouldn't be here",
+                    "bin\\lib\\Microsoft.Dnx.DesignTimeHost\\Newtonsoft.Json.dll": "3rd party DLLs don't need this",
+                    "bin\\lib\\Microsoft.Dnx.Tooling\\Microsoft.Framework.NotNullAttribute.Sources.dll": "BUG: This file shouldn't be here",
+                    "bin\\lib\\Microsoft.Dnx.Tooling\\Newtonsoft.Json.dll": "3rd party DLLs don't need this",
+                    "bin\\Microsoft.CodeAnalysis.CSharp.dll": "Need to follow up, not from ADX team",
+                    "bin\\Microsoft.CodeAnalysis.dll": "Need to follow up, not from ADX team",
+                    "bin\\Microsoft.Framework.HashCodeCombiner.Sources.dll": "BUG: This file shouldn't be here"
+                }
+            },
+            "dnx-coreclr-win-x64": {
+                "VERSION_INFORMATIONALVERSION": {
+                    "bin\\lib\\Microsoft.Dnx.DesignTimeHost\\Newtonsoft.Json.dll": "3rd party DLLs don't need this",
+                    "bin\\lib\\Microsoft.Dnx.Tooling\\Newtonsoft.Json.dll": "3rd party DLLs don't need this"
+                },
+                "SERVICING_ATTRIBUTE": {
+                    "bin\\lib\\Microsoft.Dnx.DesignTimeHost\\Microsoft.Framework.NotNullAttribute.Sources.dll": "BUG: This file shouldn't be here",
+                    "bin\\lib\\Microsoft.Dnx.DesignTimeHost\\Newtonsoft.Json.dll": "3rd party DLLs don't need this",
+                    "bin\\lib\\Microsoft.Dnx.Tooling\\Microsoft.Framework.NotNullAttribute.Sources.dll": "BUG: This file shouldn't be here",
+                    "bin\\lib\\Microsoft.Dnx.Tooling\\Newtonsoft.Json.dll": "3rd party DLLs don't need this",
+                    "bin\\Microsoft.CodeAnalysis.CSharp.dll": "Need to follow up, not from ADX team",
+                    "bin\\Microsoft.CodeAnalysis.dll": "Need to follow up, not from ADX team",
+                    "bin\\Microsoft.Framework.HashCodeCombiner.Sources.dll": "BUG: This file shouldn't be here",
+                    "bin\\mscorlib.dll": "Need to follow up, not from ADX team",
+                    "bin\\System.Security.SecureString.dll": "Need to follow up, not from ADX team"
+                }
+            },
+            "dnx-coreclr-win-x86": {
+                "VERSION_INFORMATIONALVERSION": {
+                    "bin\\lib\\Microsoft.Dnx.DesignTimeHost\\Newtonsoft.Json.dll": "3rd party DLLs don't need this",
+                    "bin\\lib\\Microsoft.Dnx.Tooling\\Newtonsoft.Json.dll": "3rd party DLLs don't need this"
+                },
+                "SERVICING_ATTRIBUTE": {
+                    "bin\\lib\\Microsoft.Dnx.DesignTimeHost\\Microsoft.Framework.NotNullAttribute.Sources.dll": "BUG: This file shouldn't be here",
+                    "bin\\lib\\Microsoft.Dnx.DesignTimeHost\\Newtonsoft.Json.dll": "3rd party DLLs don't need this",
+                    "bin\\lib\\Microsoft.Dnx.Tooling\\Microsoft.Framework.NotNullAttribute.Sources.dll": "BUG: This file shouldn't be here",
+                    "bin\\lib\\Microsoft.Dnx.Tooling\\Newtonsoft.Json.dll": "3rd party DLLs don't need this",
+                    "bin\\Microsoft.CodeAnalysis.CSharp.dll": "Need to follow up, not from ADX team",
+                    "bin\\Microsoft.CodeAnalysis.dll": "Need to follow up, not from ADX team",
+                    "bin\\Microsoft.Framework.HashCodeCombiner.Sources.dll": "BUG: This file shouldn't be here",
+                    "bin\\mscorlib.dll": "Need to follow up, not from ADX team",
+                    "bin\\System.Security.SecureString.dll": "Need to follow up, not from ADX team"
+                }
+            },
+            "dnx-mono": {
+                "VERSION_INFORMATIONALVERSION": {
+                    "bin\\lib\\Microsoft.Dnx.DesignTimeHost\\Newtonsoft.Json.dll": "3rd party DLLs don't need this",
+                    "bin\\lib\\Microsoft.Dnx.Tooling\\Newtonsoft.Json.dll": "3rd party DLLs don't need this",
+                    "bin\\Microsoft.Dnx.Host.Mono.dll": "Need to follow up, not from ADX team"
+                },
+                "VERSION_FILEVERSION": {
+                    "bin\\Microsoft.Dnx.Host.Mono.dll": "Need to follow up, not from ADX team"
+                },
+                "SERVICING_ATTRIBUTE": {
+                    "bin\\lib\\Microsoft.Dnx.DesignTimeHost\\Microsoft.Framework.NotNullAttribute.Sources.dll": "BUG: This file shouldn't be here",
+                    "bin\\lib\\Microsoft.Dnx.DesignTimeHost\\Newtonsoft.Json.dll": "3rd party DLLs don't need this",
+                    "bin\\lib\\Microsoft.Dnx.Tooling\\Microsoft.Framework.NotNullAttribute.Sources.dll": "BUG: This file shouldn't be here",
+                    "bin\\lib\\Microsoft.Dnx.Tooling\\Newtonsoft.Json.dll": "3rd party DLLs don't need this",
+                    "bin\\Microsoft.CodeAnalysis.CSharp.dll": "Need to follow up, not from ADX team",
+                    "bin\\Microsoft.CodeAnalysis.dll": "Need to follow up, not from ADX team",
+                    "bin\\Microsoft.Dnx.Host.Mono.dll": "Need to follow up, not from ADX team",
+                    "bin\\Microsoft.Framework.HashCodeCombiner.Sources.dll": "BUG: This file shouldn't be here"
+                }
+            },
+            "Microsoft.Dnx.ApplicationHost": { },
+            "Microsoft.Dnx.Compilation": { },
+            "Microsoft.Dnx.Compilation.Abstractions": { },
+            "Microsoft.Dnx.Compilation.CSharp": { },
+            "Microsoft.Dnx.Compilation.CSharp.Abstractions": { },
+            "Microsoft.Dnx.Compilation.CSharp.Common": { },
+            "Microsoft.Dnx.Compilation.DesignTime": { },
+            "Microsoft.Dnx.DesignTimeHost": { },
+            "Microsoft.Dnx.DesignTimeHost.Abstractions": { },
+            "Microsoft.Dnx.Loader": { },
+            "Microsoft.Dnx.Project": { },
+            "Microsoft.Dnx.Runtime": { },
+            "Microsoft.Dnx.Runtime.Abstractions": { },
+            "Microsoft.Dnx.Tooling": { }
+        }
+    },
+    "adx-nonshipping": { // Packages written by the ADX team but that don't ship on NuGet.org (thus, no need to scan anything in them)
+        "rules": [
+            // Don't run any rules for packages the ADX team creates but doesn't ship.
+        ],
+        "packages": {
+            "Microsoft.Dnx.Host.Clr": { },
+            "Microsoft.Dnx.Host.CoreClr": { },
+            "Microsoft.Dnx.Host": { },
+            "Microsoft.Dnx.Runtime.CommandParsing.Sources": { },
+            "Microsoft.Dnx.Runtime.Json.Sources": { },
+            "Microsoft.Dnx.Runtime.Sources": { },
+            "Microsoft.Framework.CommandLineUtils.Sources": { }
+        }
+    },
+    "Default": { // Rules to run for packages not listed in any other set.
+        "rules": [
+            "AssemblyHasDocumentFileRule",
+            "AssemblyHasVersionAttributesRule",
+            "AssemblyHasServicingAttributeRule",
+            "SatellitePackageRule",
+            "StrictSemanticVersionValidationRule"
+        ]
+    }
+}
