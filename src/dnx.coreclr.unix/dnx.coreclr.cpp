@@ -6,7 +6,6 @@
 #include "utils.h"
 #include "app_main.h"
 #include <assert.h>
-#include <thread>
 #include <string>
 #include <vector>
 #include <fstream>
@@ -322,7 +321,6 @@ bootstrapper_context initialize_context(const CALL_APPLICATION_MAIN_DATA* data)
     
     // currently we only support 64-bit Linux and Darwin
     ctx.architecture = to_wchar_t("x64");
-    ctx.processor_count = std::thread::hardware_concurrency();
     ctx.runtime_directory = to_wchar_t(data->runtimeDirectory);
     ctx.application_base = to_wchar_t(data->applicationBase);
     // we always wanto handle exceptions since they cannot be

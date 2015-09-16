@@ -20,7 +20,6 @@ sealed class DomainManager
         public char* OperatingSystem;
         public char* OsVersion;
         public char* Architecture;
-        public uint ProcessorCount;
         public char* RuntimeDirectory;
         public char* ApplicationBase;
         public bool HandleExceptions;
@@ -45,7 +44,6 @@ sealed class DomainManager
             bootstrapperContext.OperatingSystem = new string(context.OperatingSystem);
             bootstrapperContext.OsVersion = new string(context.OsVersion);
             bootstrapperContext.Architecture = new string(context.Architecture);
-            bootstrapperContext.PhysicalProcessorCount = context.ProcessorCount;
             bootstrapperContext.RuntimeDirectory = new string(context.RuntimeDirectory);
             bootstrapperContext.ApplicationBase = new string(context.ApplicationBase);
             bootstrapperContext.TargetFramework = new FrameworkName(FrameworkNames.LongNames.DnxCore, new Version(5, 0));
@@ -54,7 +52,6 @@ sealed class DomainManager
             Logger.TraceInformation($"Operating System: {bootstrapperContext.OperatingSystem}");
             Logger.TraceInformation($"Operating System Version: {bootstrapperContext.OsVersion}");
             Logger.TraceInformation($"Architecture: {bootstrapperContext.Architecture}");
-            Logger.TraceInformation($"Processor Count: {bootstrapperContext.PhysicalProcessorCount}");
             Logger.TraceInformation($"Runtime Directory: {bootstrapperContext.RuntimeDirectory}");
             Logger.TraceInformation($"Application Base: {bootstrapperContext.ApplicationBase}");
             Logger.TraceInformation($"Target Framework: {bootstrapperContext.TargetFramework}");

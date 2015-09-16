@@ -13,8 +13,6 @@ namespace Microsoft.Dnx.Host
 
         public string Architecture { get; set; }
 
-        public uint PhysicalProcessorCount { get; set; }
-
         public string RuntimeDirectory { get; set; }
 
         public string ApplicationBase { get; set; }

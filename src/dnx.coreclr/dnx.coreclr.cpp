@@ -253,7 +253,6 @@ HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DA
     bootstrapper_context ctx;
     ctx.operating_system = L"Windows";
     ctx.os_version = windows_version;
-    ctx.processor_count = std::thread::hardware_concurrency();
     ctx.runtime_directory = data->runtimeDirectory;
     ctx.application_base = data->applicationBase;
 #if defined(AMD64)
