@@ -7,6 +7,7 @@ using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common.CommandLine;
 using Microsoft.Dnx.Watcher.Core;
+using Microsoft.Framework.Logging.Console;
 
 namespace Microsoft.Dnx.Watcher
 {
@@ -41,15 +42,16 @@ namespace Microsoft.Dnx.Watcher
                 "Path to the project.json file or the application folder. Defaults to the current folder if not provided.",
                 CommandOptionType.SingleValue);
 
-            app.OnExecute(() =>
+            app.OnExecute(async () =>
             {
                 var watcher = new ProjectWatcher(
                     root => { return new PhysicalFileProvider(root); },
                     new ProjectGraphProvider(),
+                    new ConsoleLogger("test", (a, b) => { return true; }),
                     _runtimeEnvironment);
                 watcher.Initialize(projectArg.Value());
 
-                var success = watcher.Watch(CancellationToken.None);
+                var success = await watcher.WatchAsync(CancellationToken.None);
 
                 return success ? 0 : 1;
             });

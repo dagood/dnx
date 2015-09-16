@@ -4,7 +4,8 @@
     "dependencies": {
         "Microsoft.Dnx.Runtime.Internals": { "version": "1.0.0-*", "type": "build" },
         "Microsoft.Dnx.Watcher.Core": "1.0.0-*",
-        "Microsoft.Framework.CommandLineUtils.Sources": { "version": "1.0.0-*", "type": "build" }
+        "Microsoft.Framework.CommandLineUtils.Sources": { "version": "1.0.0-*", "type": "build" },
+        "Microsoft.Framework.Logging.Console": "1.0.0-*"
     }, 
     "frameworks": {
         "dnx451": { },
