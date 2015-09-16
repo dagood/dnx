@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 #include "stdafx.h"
-
 #include "dnx.coreclr.h"
 #include "tpa.h"
 #include "utils.h"
@@ -162,6 +161,44 @@ HRESULT StopClrHost(ICLRRuntimeHost2* pCLRRuntimeHost)
     return pCLRRuntimeHost->Stop();
 }
 
+void WaitForDebugger(int argc, const wchar_t** argv)
+{
+    for (int i = 0; i < argc; ++i)
+    {
+        auto arg_count = dnx::utils::get_bootstrapper_option_arg_count(argv[i]);
+        // not a bootstrapper option
+        if (arg_count == -1)
+        {
+            break;
+        }
+
+        if (arg_count > 0)
+        {
+            //skip path argument
+            i += arg_count;
+            continue;
+        }
+
+        if (dnx::utils::strings_equal_ignore_case(argv[i], L"--debug"))
+        {
+            if (!IsDebuggerPresent())
+            {
+                std::wcout << L"Process Id: " << GetCurrentProcessId() << std::endl;
+                std::wcout << L"Waiting for the debugger to attach..." << std::endl;
+
+                while (!IsDebuggerPresent())
+                {
+                    Sleep(250);
+                }
+
+                std::wcout << L"Debugger attached." << std::endl;
+            }
+
+            break;
+        }
+    }
+}
+
 HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DATA data, dnx::trace_writer& trace_writer)
 {
     const wchar_t* property_keys[] =
@@ -241,6 +278,8 @@ HRESULT ExecuteMain(ICLRRuntimeHost2* pCLRRuntimeHost, PCALL_APPLICATION_MAIN_DA
         trace_writer.write(L"Failed to create main delegate", false);
         return hr;
     }
+
+    WaitForDebugger(data->argc, data->argv);
 
     // Call main
     data->exitcode = main_function(data->argc, data->argv);

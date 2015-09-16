@@ -15,10 +15,13 @@ namespace dnx
         dnx::xstring_t to_xstring_t(const std::string& s);
         dnx::xstring_t to_xstring_t(const std::wstring& s);
         std::wstring to_wstring(const std::string& s);
+        bool strings_equal_ignore_case(const dnx::char_t* s1, const dnx::char_t* s2);
 
         dnx::xstring_t path_combine(const dnx::xstring_t& path1, const dnx::xstring_t& path2);
         bool file_exists(const dnx::xstring_t& path);
         bool directory_exists(const dnx::xstring_t& path);
         dnx::xstring_t remove_file_from_path(const dnx::xstring_t& path);
+
+        int get_bootstrapper_option_arg_count(const dnx::char_t* option_name);
     }
 }

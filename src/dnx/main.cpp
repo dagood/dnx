@@ -8,7 +8,6 @@
 int CallApplicationProcessMain(size_t argc, dnx::char_t* argv[], dnx::trace_writer& trace_writer);
 void FreeExpandedCommandLineArguments(size_t argc, dnx::char_t** ppszArgv);
 bool ExpandCommandLineArguments(size_t argc, dnx::char_t** ppszArgv, size_t& expanded_argc, dnx::char_t**& ppszExpandedArgv);
-bool strings_equal_ignore_case(const dnx::char_t* s1, const dnx::char_t* s2);
 
 #if defined(ARM)
 int wmain(int argc, wchar_t* argv[])
@@ -21,18 +20,25 @@ extern "C" int __stdcall DnxMain(int argc, wchar_t* argv[])
     // Check for the debug flag before doing anything else
     for (int i = 1; i < argc; ++i)
     {
-        //anything without - or -- is appbase or non-dnx command
-        if (argv[i][0] != _X('-'))
+        auto arg_count = dnx::utils::get_bootstrapper_option_arg_count(argv[i]);
+        // not a bootstrapper option
+        if (arg_count == -1)
         {
             break;
         }
-        if (strings_equal_ignore_case(argv[i], _X("--appbase")))
+
+        if (arg_count > 0)
         {
             //skip path argument
-            ++i;
+            i += arg_count;
             continue;
         }
-        if (strings_equal_ignore_case(argv[i], _X("--debug")))
+
+        if (dnx::utils::strings_equal_ignore_case(argv[i], _X("--bootstrapper-debug"))
+#if !defined(CORECLR_WIN) && !defined(CORECLR_LINUX) && !defined(CORECLR_DARWIN)
+            || dnx::utils::strings_equal_ignore_case(argv[i], _X("--debug"))
+#endif
+            )
         {
             WaitForDebuggerToAttach();
             break;
