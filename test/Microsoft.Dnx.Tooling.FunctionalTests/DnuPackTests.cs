@@ -123,6 +123,34 @@ public class TestClass : BaseClass {
 
         [Theory]
         [MemberData(nameof(RuntimeComponents))]
+        public void DnuPack_ClientProfile(string flavor, string os, string architecture)
+        {
+            string stdOut;
+            string stdError;
+            var runtimeHomeDir = TestUtils.GetRuntimeHomeDir(flavor, os, architecture);
+            int exitCode;
+
+            using (var testEnv = new DnuTestEnvironment(runtimeHomeDir))
+            {
+                File.WriteAllText($"{testEnv.RootDir}/project.json",
+                @"{
+                    ""frameworks"": {
+                        "".NETFramework,Version=v4.0,Profile=Client"": {
+                        },
+                        "".NETFramework,Version=v3.5,Profile=Client"": {
+                        },
+                    }
+                  }");
+                var environment = new Dictionary<string, string> { { "DNX_TRACE", "0" } };
+                DnuTestUtils.ExecDnu(runtimeHomeDir, "restore", "", out stdOut, out stdError, environment: null, workingDir: testEnv.RootDir);
+                exitCode = DnuTestUtils.ExecDnu(runtimeHomeDir, "pack", "", out stdOut, out stdError, environment, testEnv.RootDir);
+
+                Assert.Equal(0, exitCode);
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(RuntimeComponents))]
         public void DnuPack_FrameworkSpecified(string flavor, string os, string architecture)
         {
             string expectedDNX =
