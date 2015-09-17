@@ -61,13 +61,10 @@ namespace Microsoft.Dnx.Watcher.Core
             await Task.Run(
                 () =>
                 {
-                    while (!cancellationToken.IsCancellationRequested)
+                    while (!cancellationToken.IsCancellationRequested && 
+                           !_changedEvent.WaitOne(500))
                     {
-                        if (_changedEvent.WaitOne(500))
-                        {
-                            // File changed
-                            break;
-                        }
+                        // File changed or task cancelled
                     }
                 },
                 cancellationToken);

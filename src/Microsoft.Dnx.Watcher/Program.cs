@@ -4,20 +4,20 @@
 using System.Threading;
 using Microsoft.AspNet.FileProviders;
 using Microsoft.Dnx.Compilation;
-using Microsoft.Dnx.Runtime;
 using Microsoft.Dnx.Runtime.Common.CommandLine;
 using Microsoft.Dnx.Watcher.Core;
-using Microsoft.Framework.Logging.Console;
+using Microsoft.Framework.Logging;
 
 namespace Microsoft.Dnx.Watcher
 {
     public class Program
     {
-        private readonly IRuntimeEnvironment _runtimeEnvironment;
+        private readonly ILoggerFactory _loggerFactory;
 
-        public Program(IRuntimeEnvironment runtimeEnvironment)
+        public Program()
         {
-            _runtimeEnvironment = runtimeEnvironment;
+            _loggerFactory = new LoggerFactory()
+                .AddConsole(LogLevel.Debug);
         }
 
         public int Main(string[] args)
@@ -28,7 +28,7 @@ namespace Microsoft.Dnx.Watcher
 
             var optionVerbose = app.Option("-v|--verbose", "Show verbose output", CommandOptionType.NoValue);
             app.HelpOption("-?|-h|--help");
-            app.VersionOption("--version", () => _runtimeEnvironment.GetShortVersion(), () => _runtimeEnvironment.GetFullVersion());
+            //app.VersionOption("--version", () => _runtimeEnvironment.GetShortVersion(), () => _runtimeEnvironment.GetFullVersion());
 
             // Show help information if no subcommand/option was specified
             app.OnExecute(() =>
@@ -47,8 +47,7 @@ namespace Microsoft.Dnx.Watcher
                 var watcher = new ProjectWatcher(
                     root => { return new PhysicalFileProvider(root); },
                     new ProjectGraphProvider(),
-                    new ConsoleLogger("test", (a, b) => { return true; }),
-                    _runtimeEnvironment);
+                    _loggerFactory);
                 watcher.Initialize(projectArg.Value());
 
                 var success = await watcher.WatchAsync(CancellationToken.None);

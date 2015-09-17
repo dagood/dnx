@@ -22,10 +22,9 @@ namespace Microsoft.Dnx.Watcher.Core
     {
         private readonly Func<string, IFileProvider> _fileProviderFactory;
         private readonly IProjectGraphProvider _projectGraphProvider;
+        
+        private readonly ILoggerFactory _loggerFactory;
         private readonly ILogger _logger;
-        private readonly bool _isWindows;
-
-        private IEnumerable<FileSetWatcher> _fileWatchers;
 
         private string _fullProjectFilePath;
         private string _relativeProjectFilePath;
@@ -36,13 +35,12 @@ namespace Microsoft.Dnx.Watcher.Core
         public ProjectWatcher(
             Func<string, IFileProvider> fileProviderFactory,
             IProjectGraphProvider projectGraphProvider,
-            ILogger logger,
-            IRuntimeEnvironment runtimeEnviornment)
+            ILoggerFactory loggerFactory)
         {
             _fileProviderFactory = fileProviderFactory;
             _projectGraphProvider = projectGraphProvider;
-            _logger = logger;
-            _isWindows = string.Equals(runtimeEnviornment.OperatingSystem, "windows", StringComparison.OrdinalIgnoreCase);
+            _loggerFactory = loggerFactory;
+            _logger = _loggerFactory.CreateLogger<ProjectWatcher>();
         }
 
         public void Initialize(string projectOrDirectory)
@@ -79,22 +77,63 @@ namespace Microsoft.Dnx.Watcher.Core
 
         public async Task<bool> WatchAsync(CancellationToken cancellationToken)
         {
-            var project = await WaitForValidProjectJsonAsync(cancellationToken);
-            if (cancellationToken.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested)
             {
-                return true;
+                var project = await WaitForValidProjectJsonAsync(cancellationToken);
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return true;
+                }
+
+                CancellationTokenSource currentRunCancellationSource = new CancellationTokenSource();
+                CancellationTokenSource combinedCancellationSource = CancellationTokenSource.CreateLinkedTokenSource(
+                    cancellationToken,
+                    currentRunCancellationSource.Token);
+
+                var fileWatchers = CreateFileWatchers(project);
+                var fileWatchingTasks = fileWatchers.Select(watcher => watcher.WatchAsync(combinedCancellationSource.Token));
+
+                var dnxWatcher = new ProcessWatcher(_loggerFactory);
+
+                int dnxProcessId = dnxWatcher.Start("dnx", ResolveProcessArguments("web"));
+                _logger.LogVerbose($"dnx process id: {dnxProcessId}");
+
+                var dnxTask = dnxWatcher.WaitForExitAsync(combinedCancellationSource.Token);
+
+                var tasksToWait = new Task[] { dnxTask }.Concat(fileWatchingTasks).ToArray();
+
+                int finishedTaskIndex = Task.WaitAny(tasksToWait, cancellationToken);
+                
+                // Regardless of the outcome, make sure everything is cancelled
+                // and wait for dnx to exit. We don't want orphan processes
+                currentRunCancellationSource.Cancel();
+                await dnxTask;
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return true;
+                }
+
+                if (finishedTaskIndex == 0)
+                {
+                    // This is the dnx task
+                    var dnxExitCode = dnxTask.Result;
+                    _logger.LogInformation($"dnx exit code: {dnxExitCode}");
+                }
+                else
+                {
+                    // This is a file watcher task
+                    var fileChangedTask = tasksToWait[finishedTaskIndex] as Task<string>;
+                    _logger.LogInformation($"File changed: {fileChangedTask.Result}");
+                }
+
+                // Wait for all tasks to finish before starting a new iteration
+                // otherwise, there might some files locked
+                Task.WaitAll(tasksToWait);
+
+                Console.WriteLine();
             }
 
-            CreateFileWatchers(project);
-
-            //var dnxWatcher = new ProcessWatcher(
-            //    ResolveProcessHostName(),
-            //    ResolveProcessArguments("web"));
-
-            //int dnxProcessId = dnxWatcher.Start();
-            //Console.WriteLine(dnxProcessId);
-
-            //int dnxExitCode = dnxWatcher.WaitForExit(CancellationToken.None);
 
             return true;
         }
@@ -115,10 +154,10 @@ namespace Microsoft.Dnx.Watcher.Core
                         return project;
                     }
 
-                    _logger.LogError($"Error(s) reading project file '{_fullProjectFilePath}': ");
+                    _logger.LogInformation($"Error(s) reading project file '{_fullProjectFilePath}': ");
                     _logger.LogError(errors);
-                    _logger.LogError("Fix the error to continue.");
-                    
+                    _logger.LogInformation("Fix the error to continue.");
+
                     await projectFileWatcher.WatchAsync(cancellationToken);
 
                     if (!cancellationToken.IsCancellationRequested)
@@ -131,40 +170,40 @@ namespace Microsoft.Dnx.Watcher.Core
             }
         }
 
-        private string ResolveProcessHostName()
-        {
-            // TODO: check windows
-            return "cmd";
-        }
-
         private string ResolveProcessArguments(string userArguments)
         {
             // TODO: check windows
             // TODO: Fix this appbase hack once Pawel fixes the env var
-            return $"/c dnx --debug --appbase {Path.GetDirectoryName(_fullProjectFilePath)} --project {_fullProjectFilePath} Microsoft.Dnx.ApplicationHost {userArguments}";
+            return $"--appbase {Path.GetDirectoryName(_fullProjectFilePath)} --project {_fullProjectFilePath} Microsoft.Dnx.ApplicationHost {userArguments}";
         }
 
-        private void CreateFileWatchers(Project project)
+        private IEnumerable<FileSetWatcher> CreateFileWatchers(Project project)
         {
             // TODO: we need the framework to run on
             var libManager = _projectGraphProvider.GetProjectGraph(
                 project,
                 new FrameworkName(FrameworkNames.LongNames.Dnx, new Version(4, 5, 1)));
 
-            _fileWatchers = libManager.GetLibraryDescriptions().OfType<ProjectDescription>()
+            return libManager.GetLibraryDescriptions().OfType<ProjectDescription>()
                 .Select(lib => lib.Project)
-                .GroupBy(proj => ProjectRootResolver.ResolveRootDirectory(proj.ProjectFilePath))
+                .GroupBy(proj => ProjectRootResolver.ResolveRootDirectory(proj.ProjectFilePath) + Path.DirectorySeparatorChar)
                 .Select(group =>
                 {
                     var watcher = new FileSetWatcher(_fileProviderFactory(group.Key), group.Key);
-                    watcher.AddFilesToWatch(group.SelectMany(proj => proj.Files.SourceFiles));
+
+                    watcher.AddFilesToWatch(group.SelectMany(proj =>
+                        proj.Files.SourceFiles.Concat(
+                        proj.Files.PreprocessSourceFiles).Concat(
+                        proj.Files.SharedFiles).Concat(
+                        new string[] { proj.ProjectFilePath })));
+
                     return watcher;
                 })
                 .ToList();
         }
 
         // Same as TryGetProject but it doesn't throw
-        private bool TryGetProject(string projectFile, out Project project, out string  errorMessage)
+        private bool TryGetProject(string projectFile, out Project project, out string errorMessage)
         {
             //TODO: Consider printing the errors
             try
@@ -180,7 +219,7 @@ namespace Microsoft.Dnx.Watcher.Core
                     return true;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 errorMessage = ex.Message;
             }

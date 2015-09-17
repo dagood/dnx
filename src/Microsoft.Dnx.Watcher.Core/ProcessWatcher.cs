@@ -4,18 +4,28 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Framework.Logging;
 
 namespace Microsoft.Dnx.Watcher.Core
 {
     public class ProcessWatcher
     {
-        private readonly ProcessStartInfo _processStartInfo;
+        private readonly ILoggerFactory _loggerFactory;
 
         private Process _runningProcess;
+        private ILogger _logger;
 
-        public ProcessWatcher(string executable, string arguments)
+        public ProcessWatcher(ILoggerFactory loggerFactory)
         {
-            _processStartInfo = new ProcessStartInfo()
+            _loggerFactory = loggerFactory;
+        }
+
+        public int Start(string executable, string arguments)
+        {
+            // TODO: check that it is running 
+            _runningProcess = new Process();
+            _runningProcess.StartInfo = new ProcessStartInfo()
             {
                 FileName = executable,
                 Arguments = arguments,
@@ -23,14 +33,12 @@ namespace Microsoft.Dnx.Watcher.Core
                 RedirectStandardError = true,
                 UseShellExecute = false
             };
-        }
-
-        public int Start()
-        {
-            // TODO: check that it is running
-            _runningProcess = new Process();
-            _runningProcess.StartInfo = _processStartInfo;
+#if !DNXCORE50
+            _runningProcess.StartInfo.EnvironmentVariables["DNX_TRACE"] = "1";
+#endif
             _runningProcess.Start();
+
+            _logger = _loggerFactory.CreateLogger($"{executable}:{_runningProcess.Id}");
 
             _runningProcess.EnableRaisingEvents = true;
 
@@ -47,7 +55,7 @@ namespace Microsoft.Dnx.Watcher.Core
         {
             if (!string.IsNullOrEmpty(e.Data))
             {
-                Console.Error.WriteLine(e.Data);
+                _logger.LogInformation(e.Data);
             }
         }
 
@@ -55,33 +63,37 @@ namespace Microsoft.Dnx.Watcher.Core
         {
             if (!string.IsNullOrEmpty(e.Data))
             {
-                Console.WriteLine(e.Data);
+                _logger.LogError(e.Data);
             }
         }
 
-        public int WaitForExit(CancellationToken cancellationToken)
+        public async Task<int> WaitForExitAsync(CancellationToken cancellationToken)
         {
             // TODO: Check that it is running
 
             try
             {
-                while (true)
+                await Task.Run(() =>
                 {
-                    if (_runningProcess.WaitForExit(500))
+                    while (true)
                     {
-                        break;
-                    }
-
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        if (!_runningProcess.HasExited)
+                        if (_runningProcess.WaitForExit(500))
                         {
-                            _runningProcess.Kill();
+                            break;
                         }
 
-                        break;
+                        if (cancellationToken.IsCancellationRequested)
+                        {
+                            if (!_runningProcess.HasExited)
+                            {
+                                _runningProcess.Kill();
+                            }
+
+                            break;
+                        }
                     }
-                }
+                });
+
                 return _runningProcess.ExitCode;
             }
             finally
