@@ -18,9 +18,11 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
         private readonly string _baseUri;
         private readonly Reports _reports;
         private readonly HttpSource _httpSource;
+        private readonly HttpSource _unAuthenticatedHttpSource;
         private readonly TimeSpan _cacheAgeLimitList;
         private readonly TimeSpan _cacheAgeLimitNupkg;
         private readonly bool _ignoreFailure;
+        private readonly bool _usingRegistrationUri;
         private bool _ignored;
 
         private readonly Dictionary<string, Task<IEnumerable<PackageInfo>>> _packageVersionsCache = new Dictionary<string, Task<IEnumerable<PackageInfo>>>();
@@ -38,12 +40,18 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
             HttpSource httpSource,
             bool noCache,
             Reports reports,
-            bool ignoreFailure)
+            bool ignoreFailure,
+            bool usingRegistrationUri = false)
         {
             _baseUri = httpSource.BaseUri;
             _reports = reports;
             _httpSource = httpSource;
             _ignoreFailure = ignoreFailure;
+            _usingRegistrationUri = usingRegistrationUri;
+            if (_usingRegistrationUri)
+            {
+                _unAuthenticatedHttpSource = new HttpSource(_baseUri, null, null, reports);
+            }
             if (noCache)
             {
                 _cacheAgeLimitList = TimeSpan.Zero;
@@ -56,7 +64,13 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
             }
         }
 
-        internal static bool DetectNuGetV3(HttpSource httpSource, bool noCache, out Uri packageBaseAddress)
+        internal static NuGetv3Feed DetectNuGetV3(
+            HttpSource httpSource,
+            bool noCache,
+            string username,
+            string password,
+            Reports reports,
+            bool ignoreFailedSources)
         {
             var cacheAgeLimit = noCache ? TimeSpan.Zero : TimeSpan.FromDays(7);
             try
@@ -65,33 +79,60 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
                 using (var reader = new JsonTextReader(new StreamReader(result.Stream)))
                 {
                     var indexJson = JObject.Load(reader);
-                    foreach (var resource in indexJson["resources"])
-                    {
-                        var type = resource.Value<string>("@type");
-                        var id = resource.Value<string>("@id");
+                    var providedResources = indexJson["resources"]
+                        .Select(res => new { type = res.Value<string>("@type"), id = res.Value<string>("@id") })
+                        .Where(res => res.id != null)
+                        .ToArray();
 
-                        if (id != null && string.Equals(type, "PackageBaseAddress/3.0.0"))
+                    var baseAddressResource = providedResources
+                        .FirstOrDefault(res => string.Equals(res.type,"PackageBaseAddress/3.0.0"));
+                    if (baseAddressResource != null)
+                    {
+                        string uri;
+                        try
                         {
-                            try
-                            {
-                                packageBaseAddress = new Uri(id);
-                                return true;
-                            }
-                            catch (UriFormatException)
-                            {
-                                packageBaseAddress = new Uri(new Uri(httpSource.BaseUri), id);
-                                return true;
-                            }
+                            uri = new Uri(baseAddressResource.id).AbsoluteUri;
                         }
+                        catch (UriFormatException)
+                        {
+                            uri = new Uri(new Uri(httpSource.BaseUri), baseAddressResource.id).AbsoluteUri;
+                        }
+                        return new NuGetv3Feed(
+                            new HttpSource(
+                                uri,
+                                username,
+                                password,
+                                reports),
+                            noCache,
+                            reports,
+                            ignoreFailedSources);
+                    }
+
+                    var registrationsBaseUrlResource = providedResources
+                        .FirstOrDefault(res => string.Equals(res.type, "RegistrationsBaseUrl/3.0.0-beta"));
+                    if (registrationsBaseUrlResource != null)
+                    {
+                        var registrationSource = new HttpSource(
+                                    new Uri(registrationsBaseUrlResource.id).AbsoluteUri + "/",
+                                    username,
+                                    password,
+                                    reports);
+
+                        return new NuGetv3Feed(
+                            registrationSource,
+                            noCache,
+                            reports,
+                            ignoreFailedSources,
+                            usingRegistrationUri: true);
                     }
                 }
-                packageBaseAddress = null;
-                return true;
+                reports.Information.WriteLine(
+                    $"Ignoring NuGet v3 feed {httpSource.BaseUri.Yellow().Bold()}, which doesn't provide a usable resource.");
+                return null;
             }
             catch
             {
-                packageBaseAddress = null;
-                return false;
+                return null;
             }
         }
 
@@ -140,18 +181,38 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
                                 doc = JObject.Load(new JsonTextReader(reader));
                             }
 
-                            var versions = doc["versions"];
-                            if (versions == null)
+                            if (_usingRegistrationUri)
                             {
-                                // Absence of "versions" property is equivalent to an empty "versions" array
-                                return Enumerable.Empty<PackageInfo>();
+                                try
+                                {
+                                    var result = doc["items"][0]["items"]
+                                        .Select(item => BuildModel(id, item["catalogEntry"]["version"].Value<string>(), item))
+                                        .Where(item => item != null);
+
+                                    results.AddRange(result);
+                                }
+                                catch (Exception e)
+                                {
+                                    _reports.Information.WriteLine(e.Message);
+                                    throw;
+                                }
                             }
+                            else
+                            {
+                                var versions = doc["versions"];
 
-                            var result = versions
-                                .Select(x => BuildModel(id, x.ToString()))
-                                .Where(x => x != null);
+                                if (versions == null)
+                                {
+                                    // Absence of "versions" property is equivalent to an empty "versions" array
+                                    return Enumerable.Empty<PackageInfo>();
+                                }
 
-                            results.AddRange(result);
+                                var result = versions
+                                    .Select(x => BuildModel(id, x.Value<string>(), doc))
+                                    .Where(x => x != null);
+
+                                results.AddRange(result);
+                            }
                         }
                         catch
                         {
@@ -200,18 +261,28 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
             return null;
         }
 
-        public PackageInfo BuildModel(string id, string version)
+        public PackageInfo BuildModel(string id, string version, JToken item)
         {
             var lowerInvariantId = id.ToLowerInvariant();
             var lowerInvariantVersion = version.ToLowerInvariant();
-            return new PackageInfo
+
+            string contentUri;
+            if (_usingRegistrationUri)
             {
+                contentUri = item["packageContent"].Value<string>();
+            }
+            else
+            {
+                contentUri = $"{_baseUri}{lowerInvariantId}/{lowerInvariantVersion}/{lowerInvariantId}.{lowerInvariantVersion}{Constants.PackageExtension}";
+            }
+
+            return new PackageInfo {
                 // If 'Id' element exist, use its value as accurate package Id
                 // Otherwise, use the value of 'title' if it exist
                 // Use the given Id as final fallback if all elements above don't exist
                 Id = id,
                 Version = SemanticVersion.Parse(version),
-                ContentUri = $"{_baseUri}{lowerInvariantId}/{lowerInvariantVersion}/{lowerInvariantId}.{lowerInvariantVersion}{Constants.PackageExtension}",
+                ContentUri = contentUri,
 
                 // v3 feed doesn't indicate if listed?
                 Listed = true
@@ -231,12 +302,13 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
         public async Task<Stream> OpenNupkgStreamAsync(PackageInfo package)
         {
             Task<NupkgEntry> task;
+            HttpSource httpSource = _usingRegistrationUri ? _unAuthenticatedHttpSource : _httpSource;
             lock (_nupkgCache)
             {
                 if (!_nupkgCache.TryGetValue(package.ContentUri, out task))
                 {
                     task = _nupkgCache[package.ContentUri] = PackageUtilities.OpenNupkgStreamAsync(
-                        _httpSource, package, _cacheAgeLimitNupkg, _reports);
+                        httpSource, package, _cacheAgeLimitNupkg, _reports);
                 }
             }
             var result = await task;
@@ -247,8 +319,7 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
 
             // Acquire the lock on a file before we open it to prevent this process
             // from opening a file deleted by the logic in HttpSource.GetAsync() in another process
-            return await ConcurrencyUtilities.ExecuteWithFileLocked(result.TempFileName, _ =>
-            {
+            return await ConcurrencyUtilities.ExecuteWithFileLocked(result.TempFileName, _ => {
                 return Task.FromResult(
                     new FileStream(result.TempFileName, FileMode.Open, FileAccess.Read,
                     FileShare.ReadWrite | FileShare.Delete));
