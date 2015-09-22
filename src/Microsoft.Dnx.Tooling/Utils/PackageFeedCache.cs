@@ -35,34 +35,18 @@ namespace Microsoft.Dnx.Tooling
                     source.Password,
                     reports);
 
-                Uri packageBaseAddress;
-                if (NuGetv3Feed.DetectNuGetV3(httpSource, noCache, out packageBaseAddress))
-                {
-                    if (packageBaseAddress == null)
-                    {
-                        reports.Information.WriteLine(
-                            $"Ignoring NuGet v3 feed {source.Source.Yellow().Bold()}, which doesn't provide PackageBaseAddress resource.");
-                        return null;
-                    }
-
-                    httpSource = new HttpSource(
-                        packageBaseAddress.AbsoluteUri,
+                return (IPackageFeed)NuGetv3Feed.DetectNuGetV3(
+                        httpSource,
+                        noCache,
                         source.UserName,
                         source.Password,
-                        reports);
-
-                    return new NuGetv3Feed(
+                        reports,
+                        ignoreFailedSources) ??
+                    new NuGetv2Feed(
                         httpSource,
                         noCache,
                         reports,
                         ignoreFailedSources);
-                }
-
-                return new NuGetv2Feed(
-                    httpSource,
-                    noCache,
-                    reports,
-                    ignoreFailedSources);
             }
         }
     }
