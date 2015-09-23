@@ -25,11 +25,11 @@ namespace Microsoft.Dnx.Runtime
 
         public bool IsValidForProject(Project project, out string message)
         {
-            if (Version != Constants.LockFileVersion)
-            {
-                message = $"The expected lock file version does not match the actual version";
-                return false;
-            }
+            //if (Version != Constants.LockFileVersion)
+            //{
+            //    message = $"The expected lock file version does not match the actual version";
+            //    return false;
+            //}
 
             message = $"Dependencies in {Project.ProjectFileName} were modified";
 
