@@ -247,11 +247,13 @@ namespace Microsoft.Dnx.Tooling
                 useLockFile = true;
             }
 
-            if (useLockFile && !lockFile.IsValidForProject(project))
+            string invalidMessage;
+            if (useLockFile && !lockFile.IsValidForProject(project, out invalidMessage))
             {
                 // Exhibit the same behavior as if it has been run with "dnu restore --lock"
                 Reports.Information.WriteLine("Updating the invalid lock file with {0}",
                     "dnu restore --lock".Yellow().Bold());
+                Reports.Information.WriteLine(invalidMessage.White());
                 useLockFile = false;
                 Lock = true;
             }

@@ -66,6 +66,9 @@ namespace Microsoft.Dnx.Runtime
 
                 if (!actualDependencies.SequenceEqual(expectedDependencies))
                 {
+                    message += $", sequences not equal\n";
+                    message += $"Actual   (proj)" + string.Join(", ", actualDependencies) + "\n";
+                    message += $"Expected (lock)" + string.Join(", ", actualDependencies);
                     return false;
                 }
             }
