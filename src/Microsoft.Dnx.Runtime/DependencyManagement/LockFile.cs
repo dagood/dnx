@@ -68,7 +68,7 @@ namespace Microsoft.Dnx.Runtime
                 {
                     message += $", sequences not equal\n";
                     message += $"Actual   (proj)" + string.Join(", ", actualDependencies) + "\n";
-                    message += $"Expected (lock)" + string.Join(", ", actualDependencies);
+                    message += $"Expected (lock)" + string.Join(", ", expectedDependencies);
                     return false;
                 }
             }
