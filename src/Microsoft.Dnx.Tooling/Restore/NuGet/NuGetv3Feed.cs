@@ -185,9 +185,13 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
                             {
                                 try
                                 {
-                                    var result = doc["items"][0]["items"]
-                                        .Select(item => BuildModel(id, item["catalogEntry"]["version"].Value<string>(), item))
-                                        .Where(item => item != null);
+                                    var result = doc["items"]
+                                        .SelectMany(page => page["items"]
+                                            .Select(item => BuildModel(
+                                                id,
+                                                item["catalogEntry"]["version"].Value<string>(),
+                                                item))
+                                            .Where(item => item != null));
 
                                     results.AddRange(result);
                                 }
