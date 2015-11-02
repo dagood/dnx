@@ -48,7 +48,10 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
             var proxy = Environment.GetEnvironmentVariable("http_proxy");
             if (string.IsNullOrEmpty(proxy))
             {
-                _client = new HttpClient();
+                _client = new HttpClient(new HttpClientHandler
+                {
+                    AllowAutoRedirect = false
+                });
             }
             else
             {
@@ -70,6 +73,7 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
 
                 var handler = new HttpClientHandler
                 {
+                    AllowAutoRedirect = false,
                     Proxy = webProxy,
                     UseProxy = true
                 };
@@ -126,18 +130,28 @@ namespace Microsoft.Dnx.Tooling.Restore.NuGet
                 {
                     HttpStatusCode statusCode;
 
-                    using (var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead))
+                    while (true)
                     {
-                        if (!throwNotFound && response.StatusCode == HttpStatusCode.NotFound)
+                        using (var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead))
                         {
-                            _reports.Quiet.WriteLine(
-                                $"  {response.StatusCode.ToString().Green()} {uri} {sw.ElapsedMilliseconds.ToString().Bold()}ms");
-                            return new HttpSourceResult();
-                        }
+                            if (!throwNotFound && response.StatusCode == HttpStatusCode.NotFound)
+                            {
+                                _reports.Quiet.WriteLine(
+                                    $"  {response.StatusCode.ToString().Green()} {uri} {sw.ElapsedMilliseconds.ToString().Bold()}ms");
+                                return new HttpSourceResult();
+                            }
+                            if (response.StatusCode == HttpStatusCode.RedirectMethod)
+                            {
+                                request = new HttpRequestMessage(HttpMethod.Get, response.Headers.Location);
+                                continue;
+                            }
 
-                        response.EnsureSuccessStatusCode();
-                        statusCode = response.StatusCode;
-                        await response.Content.CopyToAsync(responseStream);
+                            response.EnsureSuccessStatusCode();
+                            statusCode = response.StatusCode;
+                            await response.Content.CopyToAsync(responseStream);
+
+                            break;
+                        }
                     }
 
                     responseStream.Seek(0, SeekOrigin.Begin);
